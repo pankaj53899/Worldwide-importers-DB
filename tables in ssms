@@ -1,0 +1,36 @@
+--Local temporary tables
+drop table if exists #temp_table1;
+select distinct [SupplierID],[SupplierName] 
+into #temp_table1 from
+[WideWorldImporters].[Website].[Suppliers];
+
+
+
+drop table if exists #temp_table2;
+select distinct [SupplierID],[SupplierName] 
+into #temp_table2
+FROM [WideWorldImporters].[Purchasing].[Suppliers];
+
+select * from #temp_table1;
+select * from #temp_table2;
+
+select * from #temp_table1
+union all select * from #temp_table2;
+
+--global temporary tables
+drop table if exists ##temp_table3;
+select a.* into ##temp_table3 from (select * from #temp_table1
+union select * from #temp_table2) a;
+
+select * from ##temp_table3;
+
+--create table in database
+
+use WideWorldImporters;
+
+create table temp_table1 ([SupplierID] varchar,[SupplierName] varchar);
+
+drop table dbo.temp_table1;
+
+select * from temp_table1;
+

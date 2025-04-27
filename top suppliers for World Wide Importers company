@@ -1,0 +1,59 @@
+--Problem1: Which are the top suppliers for World Wide Importers company?
+
+--all supplier to the company
+drop table if exists ##temp_table1;
+select distinct z.* 
+into ##temp_table1
+from (select a.[SupplierID]
+      ,a.[SupplierName]
+	  ,b.[SupplierCategoryName]
+	  ,a.[PostalAddressLine2]
+      ,a.[PostalPostalCode]
+from [WideWorldImporters].[Purchasing].[Suppliers] a
+left join [WideWorldImporters].[Purchasing].[SupplierCategories] b
+on a.[SupplierCategoryID]=b.[SupplierCategoryID])z;
+
+--purchase details
+drop table if exists ##temp_table2;
+select distinct z.* 
+into ##temp_table2
+from (SELECT a.[PurchaseOrderID]
+      ,a.[SupplierID]
+      ,a.[OrderDate]
+      ,a.[ExpectedDeliveryDate]
+	  ,b.[PurchaseOrderLineID]
+      ,b.[StockItemID]
+      ,b.[OrderedOuters]
+      ,b.[Description]
+      ,b.[ReceivedOuters]
+      ,b.[ExpectedUnitPricePerOuter]
+      ,b.[LastReceiptDate]
+  FROM [WideWorldImporters].[Purchasing].[PurchaseOrders] a
+  left join [WideWorldImporters].[Purchasing].[PurchaseOrderLines] b
+  on a.PurchaseOrderID=b.PurchaseOrderID)z;
+
+  --purchase orders where received outers is not 0
+  drop table if exists ##temp_table3;
+select distinct z.* 
+into ##temp_table3
+from (select *,ReceivedOuters*ExpectedUnitPricePerOuter as line_order_amount from
+  ##temp_table2 where receivedOuters<>0)z;
+ 
+ --group by supplier id
+  drop table if exists ##temp_table4;
+select distinct z.* 
+into ##temp_table4
+from (select SupplierID,sum(line_order_amount) as total_amount from ##temp_table3
+group by SupplierID)z;
+
+--add suppier data
+  drop table if exists ##temp_table5;
+select distinct z.* 
+into ##temp_table5
+from (select a.*,b.SupplierName,b.SupplierCategoryName,b.PostalAddressLine2,b.PostalPostalCode from ##temp_table4 a
+left join ##temp_table1 b on a.SupplierID=b.SupplierID
+)z;
+
+--top suppliers
+select * from  ##temp_table5  order by total_amount desc;
+

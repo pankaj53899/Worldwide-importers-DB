@@ -2,7 +2,7 @@
 
 In this repository, we will use this fictitious database of Worldwide importers to practice SQL problems.
 
-worldwide importers sample database link-
+worldwide importers sample database information-
 https://learn.microsoft.com/en-us/sql/samples/wide-world-importers-what-is?view=sql-server-ver16
 
 Data dictionary link

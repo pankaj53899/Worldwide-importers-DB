@@ -20,7 +20,7 @@ Workflow of the business
 9 Customers pay invoices to WWI.
 10 Periodically, WWI pays suppliers for items that were on purchase orders. This is often sometime after they've received the goods.
 
-Problems dicussed-
+SQL Problems dicussed-
 1. Which are the top suppliers for World Wide Importers company?
 2. Average order price for each supplier
 3. Supplier invoices which have not been paid

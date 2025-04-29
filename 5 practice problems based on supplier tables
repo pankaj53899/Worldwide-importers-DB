@@ -1,0 +1,169 @@
+/*----------------------------------------------------------------------------------------------
+Problem 1: Which are the top suppliers for World Wide Importers company?
+-----------------------------------------------------------------------------------------------*/
+
+--all supplier to the company
+drop table if exists #temp_table1;
+select distinct z.* 
+into #temp_table1
+from (select a.[SupplierID]
+      ,a.[SupplierName]
+	  ,b.[SupplierCategoryName]
+	  ,a.[PostalAddressLine2]
+      ,a.[PostalPostalCode]
+from [WideWorldImporters].[Purchasing].[Suppliers] a
+left join [WideWorldImporters].[Purchasing].[SupplierCategories] b
+on a.[SupplierCategoryID]=b.[SupplierCategoryID])z;
+
+--purchase details
+drop table if exists #temp_table2;
+select distinct z.* 
+into #temp_table2
+from (SELECT a.[PurchaseOrderID]
+      ,a.[SupplierID]
+      ,a.[OrderDate]
+      ,a.[ExpectedDeliveryDate]
+	  ,b.[PurchaseOrderLineID]
+      ,b.[StockItemID]
+      ,b.[OrderedOuters]
+      ,b.[Description]
+      ,b.[ReceivedOuters]
+      ,b.[ExpectedUnitPricePerOuter]
+      ,b.[LastReceiptDate]
+  FROM [WideWorldImporters].[Purchasing].[PurchaseOrders] a
+  left join [WideWorldImporters].[Purchasing].[PurchaseOrderLines] b
+  on a.PurchaseOrderID=b.PurchaseOrderID)z;
+
+  --purchase orders where received outers is not 0
+  drop table if exists #temp_table3;
+select distinct z.* 
+into #temp_table3
+from (select *,ReceivedOuters*ExpectedUnitPricePerOuter as line_order_amount from
+  #temp_table2 where receivedOuters<>0)z;
+ 
+ --group by supplier id
+  drop table if exists #temp_table4;
+select distinct z.* 
+into #temp_table4
+from (select SupplierID,sum(line_order_amount) as total_amount from #temp_table3
+group by SupplierID)z;
+
+--add suppier data
+  drop table if exists #temp_table5;
+select distinct z.* 
+into #temp_table5
+from (select a.*,b.SupplierName,b.SupplierCategoryName,b.PostalAddressLine2,b.PostalPostalCode from #temp_table4 a
+left join #temp_table1 b on a.SupplierID=b.SupplierID
+)z order by total_amount desc;
+
+
+/*
+Fabrikam, Inc.				Clothing Supplier			678066222.00	Eaglemont
+Litware, Inc.				Packaging Supplier			266115587.90	Jackson
+Northwind Electric Cars		Toy Supplier				78816.50		Arlington
+The Phone Company			Novelty Goods Supplier		50820.00		Ferny Wood
+A Datum Corporation			Novelty Goods Supplier		25023.00		Surrey
+Graphic Design Institute	Novelty Goods Supplier		6489.00			Willow
+Contoso, Ltd.				Novelty Goods Supplier		313.50			Jolimont
+*/
+
+
+/*----------------------------------------------------------------------------------------------
+Problem 2: Average order price for each supplier
+-----------------------------------------------------------------------------------------------*/
+ 
+ --group by supplier id
+drop table if exists #temp_table6;
+select distinct z.*,z1.SupplierName,z1.SupplierCategoryName
+into #temp_table6
+from (select SupplierID,cast(avg(line_order_amount) as decimal(12,2)) as average_amount from #temp_table3
+group by SupplierID)z
+left join #temp_table1 z1
+on z.SupplierID=z1.SupplierID
+order by average_amount desc;
+
+/*
+Fabrikam, Inc.				Clothing Supplier		116988.65
+Litware, Inc.				Packaging Supplier		107564.91
+Northwind Electric Cars		Toy Supplier			4378.69
+The Phone Company			Novelty Goods Supplier	3388.00
+A Datum Corporation			Novelty Goods Supplier	2502.30
+Graphic Design Institute	Novelty Goods Supplier	154.50
+Contoso, Ltd.				Novelty Goods Supplier	104.50
+*/
+
+
+/*----------------------------------------------------------------------------------------------
+Problem 3: Supplier invoices which have not been paid
+-----------------------------------------------------------------------------------------------*/
+ 
+drop table if exists #temp_table7;
+select distinct z.*, b.SupplierName,b.SupplierCategoryName
+into #temp_table7
+from (select PurchaseOrderID,TransactionDate,AmountExcludingTax,TaxAmount,TransactionAmount,OutstandingBalance,SupplierID 
+FROM [WideWorldImporters].[Purchasing].[SupplierTransactions]
+where OutstandingBalance>0)z
+left join #temp_table1 b on z.SupplierID=b.SupplierID;
+
+/*
+PurchaseOrderID- 2071, 2072
+*/
+
+
+/*----------------------------------------------------------------------------------------------
+Problem 4: Orders which have not been received
+-----------------------------------------------------------------------------------------------*/
+
+drop table if exists #temp_table8;
+select distinct z.*,z1.[OrderDate],z1.[SupplierID],z2.SupplierName,z3.[TransactionDate]
+      ,z3.[AmountExcludingTax]
+      ,z3.[TaxAmount]
+      ,z3.[TransactionAmount]
+      ,z3.[OutstandingBalance]
+into #temp_table8
+from (SELECT [PurchaseOrderLineID]
+      ,[PurchaseOrderID]
+      ,[OrderedOuters]
+      ,[Description]
+      ,[ReceivedOuters]
+      ,[ExpectedUnitPricePerOuter]
+  FROM [WideWorldImporters].[Purchasing].[PurchaseOrderLines]
+  where [ReceivedOuters]=0)z
+  left join [WideWorldImporters].[Purchasing].[PurchaseOrders] z1
+  on z.PurchaseOrderID=z1.PurchaseOrderID
+  left join [WideWorldImporters].[Purchasing].[Suppliers] z2
+  on z1.SupplierID=z2.SupplierID
+  left join [WideWorldImporters].[Purchasing].[SupplierTransactions] z3
+  on z.PurchaseOrderID=z3.PurchaseOrderID;
+
+  /*
+  PurchaseOrderID- 2073, 2074
+  Invoice not found for these orders
+  */
+
+/*----------------------------------------------------------------------------------------------
+Problem 5: Highest selling items of each supplier
+-----------------------------------------------------------------------------------------------*/
+drop table if exists #temp_table8;
+select z.* 
+into #temp_table8 
+from (SELECT a.[PurchaseOrderLineID],a.[PurchaseOrderID],a.[Description],a.[ReceivedOuters],b.[SupplierID],c.SupplierName,d.SupplierCategoryName
+  FROM [WideWorldImporters].[Purchasing].[PurchaseOrderLines] a
+  left join [WideWorldImporters].[Purchasing].[PurchaseOrders] b
+  on a.PurchaseOrderID=b.PurchaseOrderID 
+  left join [WideWorldImporters].[Purchasing].[Suppliers] c
+  on b.SupplierID=c.SupplierID
+    left join [WideWorldImporters].[Purchasing].[SupplierCategories] d
+  on c.SupplierCategoryID=d.SupplierCategoryID
+  )z;
+
+  drop table if exists #temp_table9;
+select distinct z1.* 
+into #temp_table9 
+from (select z.*, DENSE_RANK() over (partition by z.supplierName order by z.sold_quantity desc) as rank
+from (SELECT SupplierName,SupplierCategoryName,[Description],sum(ReceivedOuters) as sold_quantity
+  FROM #temp_table8
+  group by SupplierName,SupplierCategoryName,[Description]
+  )z)z1 where z1.rank=1;
+
+--select * from #temp_table9 

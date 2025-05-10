@@ -29,15 +29,16 @@ SELECT [OrderID]
 
   --stockitems table
 drop table if exists [WideWorldImporters].[dbo].[StockItems];
-select	a.[StockItemID],
-        a.[StockItemName],
-        a.[TaxRate],
-        a.[UnitPrice],
-        a.[RecommendedRetailPrice], c.[StockGroupName]
-		into [WideWorldImporters].[dbo].[StockItems]
-		from [WideWorldImporters].[Warehouse].[StockItems] a
-		left join [WideWorldImporters].[Warehouse].[StockItemStockGroups] b on a.StockItemID=b.StockItemID
-		left join [WideWorldImporters].[Warehouse].[StockGroups] c on b.StockGroupID=c.StockGroupID;
+with stockItemsGroup as
+(select	a.[StockItemID], a.[StockItemName], a.[TaxRate], a.[UnitPrice], a.[RecommendedRetailPrice], c.[StockGroupName]
+from [WideWorldImporters].[Warehouse].[StockItems] a
+left join [WideWorldImporters].[Warehouse].[StockItemStockGroups] b on a.StockItemID=b.StockItemID
+left join [WideWorldImporters].[Warehouse].[StockGroups] c on b.StockGroupID=c.StockGroupID)
+select [StockItemID], [StockItemName], [TaxRate], [UnitPrice], [RecommendedRetailPrice], 
+	  STRING_AGG(CONVERT(NVARCHAR(max), [StockGroupName]), ' | ') WITHIN GROUP (ORDER BY [StockGroupName] ASC) AS StockGroupNames   
+      into [WideWorldImporters].[dbo].[StockItems]
+	  FROM stockItemsGroup
+      GROUP BY [StockItemID] ,[StockItemName] ,[TaxRate] ,[UnitPrice] ,[RecommendedRetailPrice];
 
 --invoices table
 SELECT [InvoiceID]

@@ -24,11 +24,12 @@ https://dataedo.com/samples/html/WideWorldImporters/doc/WideWorldImporters_5/hom
 6. WWI invoices customers for the stock items, typically by converting the order to an invoice.
 
 7. Customers might order items that aren't in stock. These items are backordered.
+
 8. WWI delivers stock items to customers either via their own delivery vans, or via other couriers or freight methods.
 
-9 Customers pay invoices to WWI.
+9. Customers pay invoices to WWI.
 
-10 Periodically, WWI pays suppliers for items that were on purchase orders. This is often sometime after they've received the goods.
+10. Periodically, WWI pays suppliers for items that were on purchase orders. This is often sometime after they've received the goods.
 
 
 

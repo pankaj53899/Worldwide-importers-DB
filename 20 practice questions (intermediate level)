@@ -1,3 +1,4 @@
+
 /*
 1. Top Spenders in the Last 6 Months
 Write a query to find the top 5 customers who have spent the most in the last 6 months. Include customer name, total spent, and number of orders.
@@ -29,3 +30,18 @@ select t1.CustomerName, count(t1.invoiceid) as order_count, sum(t1.gross_amount)
 group by t1.CustomerName)
 
 select top 5* from customer_summary order by total_spent desc;
+
+/*
+2. Product Performance by Category
+Write a query to find the top 3 best-selling products (by quantity) in each category. Return category, product_name, and total quantity sold.
+*/
+
+
+select z.stockgroupnames,z.rank as item_rank,z.description as item_name,z.count_items  from (select distinct a.*,b.[StockGroupNames],
+DENSE_RANK() over (partition by b.[StockGroupNames] order by count_items desc) as rank
+from 
+(select StockItemID, Description, SUM(quantity) as count_items
+from [WideWorldImporters].[dbo].[InvoiceLines]
+group by StockItemID, Description) a
+left join [WideWorldImporters].[dbo].[StockItems] b on a.StockItemID=b.StockItemID)z
+where z.rank<=3 order by z.StockGroupNames,z.rank asc;

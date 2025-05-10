@@ -5,7 +5,6 @@ into #temp_table1 from
 [WideWorldImporters].[Website].[Suppliers];
 
 
-
 drop table if exists #temp_table2;
 select distinct [SupplierID],[SupplierName] 
 into #temp_table2

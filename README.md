@@ -9,7 +9,9 @@ Data dictionary link
 https://dataedo.com/samples/html/WideWorldImporters/doc/WideWorldImporters_5/home.html
 
 Workflow of the business
+
 1 WWI creates purchase orders and submits the orders to the suppliers.
+
 2 Suppliers send the items, WWI receives them and stocks them in their warehouse.
 3 Customers order items from WWI
 4 WWI fills the customer order with stock items in the warehouse, and when they don't have sufficient stock, they order the additional stock from the suppliers.

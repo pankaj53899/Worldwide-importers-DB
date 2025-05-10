@@ -1,0 +1,61 @@
+--customers table
+SELECT [CustomerID]
+      ,[CustomerName]
+      ,[AccountOpenedDate]
+      ,[PostalAddressLine2]
+into [WideWorldImporters].[Dbo].[Customers]
+FROM [WideWorldImporters].[Sales].[Customers];
+
+--orders table
+SELECT [OrderID]
+      ,[CustomerID]
+      ,[OrderDate]
+      ,[ExpectedDeliveryDate]
+      ,[CustomerPurchaseOrderNumber]
+	  into [WideWorldImporters].[Dbo].[Orders]
+  FROM [WideWorldImporters].[Sales].[Orders];
+
+  --orderlines table
+  SELECT [OrderLineID]
+      ,[OrderID]
+      ,[StockItemID]
+      ,[Description]
+      ,[Quantity]
+      ,[UnitPrice]
+      ,[TaxRate]
+      ,[PickedQuantity]
+  into [WideWorldImporters].[Dbo].[OrderLines]
+  FROM [WideWorldImporters].[Sales].[OrderLines];
+
+  --stockitems table
+  SELECT [StockItemID]
+      ,[StockItemName]
+      ,[TaxRate]
+      ,[UnitPrice]
+      ,[RecommendedRetailPrice]
+	  into [WideWorldImporters].[Dbo].[StockItems]
+  FROM [WideWorldImporters].[Warehouse].[StockItems]
+
+--invoices table
+SELECT [InvoiceID]
+      ,[CustomerID]
+      ,[OrderID]
+      ,[InvoiceDate]
+      ,[CustomerPurchaseOrderNumber]
+	  into [WideWorldImporters].[Dbo].[Invoices]
+  FROM [WideWorldImporters].[Sales].[Invoices]
+
+  --invoicelines table
+  SELECT TOP (1000) [InvoiceLineID]
+      ,[InvoiceID]
+      ,[StockItemID]
+      ,[Description]
+      ,[Quantity]
+      ,[UnitPrice]
+      ,[TaxRate]
+      ,[TaxAmount]
+      ,[LineProfit] 
+      ,[ExtendedPrice]
+	  into [WideWorldImporters].[Dbo].[InvoiceLines]
+  FROM [WideWorldImporters].[Sales].[InvoiceLines]
+

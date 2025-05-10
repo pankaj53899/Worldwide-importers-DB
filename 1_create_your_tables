@@ -34,7 +34,7 @@ SELECT [OrderID]
       ,[UnitPrice]
       ,[RecommendedRetailPrice]
 	  into [WideWorldImporters].[Dbo].[StockItems]
-  FROM [WideWorldImporters].[Warehouse].[StockItems]
+  FROM [WideWorldImporters].[Warehouse].[StockItems];
 
 --invoices table
 SELECT [InvoiceID]
@@ -43,7 +43,7 @@ SELECT [InvoiceID]
       ,[InvoiceDate]
       ,[CustomerPurchaseOrderNumber]
 	  into [WideWorldImporters].[Dbo].[Invoices]
-  FROM [WideWorldImporters].[Sales].[Invoices]
+  FROM [WideWorldImporters].[Sales].[Invoices];
 
   --invoicelines table
   SELECT TOP (1000) [InvoiceLineID]
@@ -57,5 +57,5 @@ SELECT [InvoiceID]
       ,[LineProfit] 
       ,[ExtendedPrice]
 	  into [WideWorldImporters].[Dbo].[InvoiceLines]
-  FROM [WideWorldImporters].[Sales].[InvoiceLines]
+  FROM [WideWorldImporters].[Sales].[InvoiceLines];
 

@@ -1,3 +1,8 @@
+--MAKE SURE TO CREATE CUSTOMIZED TABLES IN YOUR DATABASE FIRST
+--6 tables are [WideWorldImporters].[dbo].[Orders], [WideWorldImporters].[dbo].OrderLines, [WideWorldImporters].[dbo].Customers, [WideWorldImporters].[dbo].[Invoices], [WideWorldImporters].[dbo].[InvoiceLines], [WideWorldImporters].[dbo].[StockItems]
+--Code to create tables is present in file named '1_create_your_custom_tables'
+--Description of fields present in custom details are available in the file named '2_Column_description_for_the_custom_tables'
+
 
 /*
 1. Top Spenders in the Last 6 Months

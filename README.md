@@ -31,6 +31,10 @@ https://dataedo.com/samples/html/WideWorldImporters/doc/WideWorldImporters_5/hom
 
 10. Periodically, WWI pays suppliers for items that were on purchase orders. This is often sometime after they've received the goods.
 
-
-
+**Steps to use repository for your practice**
+1. Create 6 customized tables in your worldwideimporters database. These tables are Dbo.Orders, Dbo.OrderLines, Dbo.Customers, Dbo.Invoices, Dbo.InvoiceLines and Dbo.StockItems.
+2. Code to create tables is present in file named '1_create_your_custom_tables'
+3. Description of fields present in custom details are available in the file named '2_Column_description_for_the_custom_tables'
+4. Start with beginner problems present in file- 10 SQL problems for beginners
+   
 

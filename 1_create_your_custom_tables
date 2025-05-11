@@ -1,8 +1,10 @@
 --customers table
+drop table if exists [WideWorldImporters].[Dbo].[Customers];
 SELECT [CustomerID]
       ,[CustomerName]
       ,[AccountOpenedDate]
       ,[PostalAddressLine2]
+	  ,PhoneNumber
 into [WideWorldImporters].[Dbo].[Customers]
 FROM [WideWorldImporters].[Sales].[Customers];
 

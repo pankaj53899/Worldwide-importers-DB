@@ -27,3 +27,33 @@ Count the number of orders that are not picked.
 
 10. Most Expensive Product
 Which product has the highest price?
+
+11. Recent Signups
+Show the names of customers who signed up in the last 30 days.
+
+12. Orders per Customer
+How many orders has each customer placed? Show customer name and order count.
+
+13. Product Prices Over 1000
+List all products priced above 1000.
+
+14. Unique Cities
+From how many different cities do we have customers?
+
+15. Orders with Total Above 5000
+List all order IDs where the total_amount is more than 5000.
+
+16. Customer and Order Join
+Show customer name, order_id, and order_date by joining customers and orders.
+
+17. Product Category Count
+How many products are there in each category?
+
+18. Customer Email Format Check
+Show all customers whose phone number is not in proper format. Ideally length should be 14 characters.
+
+19. Orders with No Items
+List any order IDs that have no matching rows in order_items.
+
+20. Gray color Product
+Find all items where the product description contains the color "Gray" 

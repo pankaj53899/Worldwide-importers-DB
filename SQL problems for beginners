@@ -1,0 +1,29 @@
+1. Total Customers
+How many customers are there in the database?
+
+2. Orders Count
+How many total orders have been placed?
+
+3. First and Last Order Dates
+What is the date of the first and the most recent order in the system?
+
+4. Customers from a City
+List all customers having postal address as "Ghoshville".
+
+5. Products and Categories
+Show all products along with their categories.
+
+6. Orders in Last 7 Days
+How many orders were placed in the month of MAY 2016?
+
+7. Order Amounts per Customer
+For each customer, show their name and total amount spent (from orders).
+
+8. Product Quantity Summary
+For each product, show total quantity sold.
+
+9. Completed vs Pending Orders
+Count the number of orders that are not picked.
+
+10. Most Expensive Product
+Which product has the highest price?

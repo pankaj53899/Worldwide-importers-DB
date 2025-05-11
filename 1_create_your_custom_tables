@@ -8,6 +8,10 @@ SELECT [CustomerID]
 into [WideWorldImporters].[Dbo].[Customers]
 FROM [WideWorldImporters].[Sales].[Customers];
 
+UPDATE [WideWorldImporters].[dbo].Customers
+SET PhoneNumber = '(205) 555-0100-9'
+WHERE PhoneNumber='(205) 555-0100';
+
 --orders table
 SELECT [OrderID]
       ,[CustomerID]

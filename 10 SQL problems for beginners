@@ -1,0 +1,87 @@
+--MAKE SURE TO CREATE CUSTOMIZED TABLES IN YOUR DATABASE FIRST
+--6 tables are [WideWorldImporters].[dbo].[Orders], [WideWorldImporters].[dbo].OrderLines, [WideWorldImporters].[dbo].Customers, [WideWorldImporters].[dbo].[Invoices], [WideWorldImporters].[dbo].[InvoiceLines], [WideWorldImporters].[dbo].[StockItems]
+--Code to create tables is present in file named '1_create_your_custom_tables'
+--Description of fields present in custom details are available in the file named '2_Column_description_for_the_custom_tables'
+
+/*
+1. Total Customers
+How many customers are there in the database?
+*/
+select count(distinct CustomerID) from [WideWorldImporters].[dbo].Customers;
+--663 customers
+
+/*
+2. Orders Count
+How many total orders have been placed?
+*/
+select count(distinct OrderID) from [WideWorldImporters].[dbo].[Orders];
+--73595 orders
+
+/*
+3. First and Last Order Dates
+What is the date of the first and the most recent order in the system?
+*/
+select max(orderdate), min(orderdate) from [WideWorldImporters].[dbo].[Orders];
+--latest order 2016-05-31
+--oldest order 2013-01-01
+
+/*
+4. Customers from a City
+List all customers having postal adress as "Ghoshville".
+*/
+select distinct customername from [WideWorldImporters].[dbo].Customers where postaladdressline2='Ghoshville';
+--6 customers
+
+/*
+5. Products and Categories
+Show all products along with their categories.
+*/
+select distinct stockitemname,stockgroupnames from [WideWorldImporters].[dbo].[StockItems];
+--227 items
+
+/*
+6. Orders in Last 7 Days
+How many orders were placed in the month of MAY 2016?
+*/
+select *  from [WideWorldImporters].[dbo].[Orders]
+where OrderDate like '2016-05%';
+--2047 orders
+
+/*
+7. Order Amounts per Customer
+For each customer, show their name and total amount spent (from orders).
+*/
+
+with orderline_price as (select orderid, orderlineid,(unitprice*pickedquantity+unitprice*pickedquantity*taxrate*0.01) as orderline_amount 
+from [WideWorldImporters].[dbo].OrderLines),
+order_price as (select orderid, sum(orderline_amount) as order_amount from orderline_price group by orderid),
+order_price_customer as (
+select a.*, b.customerid, c.customername from order_price a
+left join [WideWorldImporters].[dbo].[Orders] b on a.OrderID=b.OrderID
+left join [WideWorldImporters].[dbo].Customers c on b.CustomerID=c.CustomerID)
+select customername, sum(order_amount) as amount_spent from order_price_customer 
+group by customername order by sum(order_amount) desc;
+
+/*
+8. Product Quantity Summary
+For each product, show total quantity sold.
+*/
+select StockItemID,Description,sum(pickedquantity) as quantity_sold from [WideWorldImporters].[dbo].OrderLines
+group by StockItemID,Description
+order by sum(pickedquantity) desc;
+
+/*
+9. Completed vs Pending Orders
+Count the number of orders that are not picked.
+*/
+select distinct orderid from [WideWorldImporters].[dbo].OrderLines 
+where PickedQuantity=0;
+--3085 orders 
+
+/*
+10. Most Expensive Product
+Which product has the highest price?
+*/
+select top 1 StockItemID,StockItemName,UnitPrice from [WideWorldImporters].[dbo].[StockItems]
+order by UnitPrice desc;
+--Air cushion machine (Blue)

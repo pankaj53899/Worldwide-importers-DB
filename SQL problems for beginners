@@ -62,3 +62,83 @@ List any order IDs that have no matching rows in order_items.
 
 20. Gray color Product
 Find all items where the product description contains the color "Gray" 
+
+21. Top 5 Most Recent Orders
+
+Show the 5 most recent orders with order ID, customer name, and order date.
+
+22. Customer Without Orders
+
+List all customers who have never placed an order.
+
+23. Orders by City
+
+Show the number of orders grouped by customer city.
+
+24. Total Revenue
+
+What is the total revenue from all completed orders?
+
+25. Average Order Value
+
+What is the average order value (total_amount) across all orders?
+
+26. First Order per Customer
+
+Show the first order date for each customer.
+
+27. Orders in 2017
+
+How many orders were placed in the calendar year 2016?
+
+28. Product Price Range
+
+Find the minimum and maximum price of all products.
+
+29. Days Since Signup
+
+For each customer, show how many days ago they signed up (from today).
+
+30. Orders with Product Count
+
+For each order, how many different products were included?
+
+31. Orders Delivered Same Day
+
+List orders where the delivery date is the same as the order date.
+
+32. Products Never Ordered
+
+Find products that were never included in any order.
+
+33. Category of Most Expensive Product
+
+What category does the most expensive product belong to?
+
+34. Customers with only 1 order
+
+Are there any customers who have placed only 1 order till now?
+
+35. Orders with High Quantity
+
+List orders that included any product with a quantity of 10 or more.
+
+36. Category with Most Products
+
+Which product category has the highest number of products?
+
+37. Customer with maximum Order
+
+Find customer who has placed maximum order.
+
+38. Order Date and Weekday
+
+For each order, show the order date and the day of the week it was placed.
+
+39. Orders not invoiced
+
+List orders that don’t have invoices generated.
+
+40. Customers with phone is not Provided
+
+Show customers where phone number is NULL or empty.

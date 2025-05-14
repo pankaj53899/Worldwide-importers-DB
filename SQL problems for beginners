@@ -142,3 +142,82 @@ List orders that don’t have invoices generated.
 40. Customers with phone is not Provided
 
 Show customers where phone number is NULL or empty.
+
+41. Product Sales Summary
+
+For each product, show the total quantity sold and total revenue (price × quantity).
+
+42. Customers Who Placed Orders in December
+
+List customers who placed at least one order in December (any year).
+
+43.Customer who placed highest order
+
+Find customer who placed the order with highest value.
+
+44. Number of Orders per Month
+
+Show how many orders were placed each month in 2013.
+
+45. Product Count per Order
+
+For each order, how many unique products were ordered?
+
+46. Customer Signup Year
+
+For each customer, extract the year they signed up.
+
+47. Customers Whose Name Starts with ‘A’
+
+List all customers whose names begin with the letter A.
+
+48. Find Duplicate Phone
+
+Are there any customers with duplicate phone numbers ?
+
+49. Orders Made on a Weekend
+
+Find orders placed on a Saturday or Sunday.
+
+50. Product Categories Starting with ‘E’
+
+List all unique product categories that start with the letter ‘E’.
+
+51. Top-Selling Product by Revenue
+
+Which product generated the highest revenue overall?
+
+52. Percentage of Completed Orders
+
+What percentage of total orders are marked as ‘completed’?
+
+53. Products Sold in Only One Order
+
+Identify products that have been sold in only one distinct order.
+
+54. Average Items per Order
+
+On average, how many items are there in each order?
+
+55. Order Fulfillment Delay
+
+Show the number of days it took to fulfill each order (fulfillment_date - order_date).
+
+56. List Product Prices by Category
+
+For each category, list all products sorted by price descending.
+57. Top Customer by Total quality 
+
+Who is the customer that has placed the most order in total?
+
+58. Longest Customer Name
+
+Which customer has the longest name?
+
+59. Orders with No Fulfillment
+
+List all orders that have not been delivered.
+
+ 60. Product Name Word Count
+
+For each product, count how many words are in its name.

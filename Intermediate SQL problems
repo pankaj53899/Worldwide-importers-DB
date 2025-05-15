@@ -1,0 +1,32 @@
+1. Customer and Last Order Date
+For each customer, show their most recent order date.
+
+2. Customers with Orders in 2 Different Months
+Find customers who placed orders in at least two different months.
+
+3. Week-wise revenue 
+Create a table that shows the revenue for each week right from 2013 to 2016. Weeks should be named in format ‘Week1-2013’.
+
+4. Monthly Revenue Trend
+Show the total revenue per month from 2013 to 2016.
+
+5. Most Recent Order per Customer
+For each customer, show their latest order ID, order date, and order total.
+
+6. Customer Order Frequency
+For each customer, show how many days on average pass between their orders.
+
+7. Fulfillment Delay Categories
+For each fulfilled order, categorize delay as: •	'Same Day' if fulfilled same day
+•	'1-3 Days'
+•	'4-7 Days'
+•	'More than a Week'
+
+8. Customer’s First Month Activity
+For each customer, count how many orders they placed in the same month they signed up.
+
+9. Product Pairs Frequently Bought Together
+Show product pairs that were ordered together in the same order more than 10 times.
+
+10. Revenue Difference Between Consecutive Months
+Show monthly revenue and the difference in revenue compared to the previous month.

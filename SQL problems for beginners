@@ -3,221 +3,651 @@
 --Code to create tables is present in file named '1_create_your_custom_tables'
 --Description of fields present in custom details are available in the file named '2_Column_description_for_the_custom_tables'
 
+/*
 1. Total Customers
 How many customers are there in the database?
+*/
+select count(distinct CustomerID) from [WideWorldImporters].[dbo].Customers;
+--663 customers
 
+/*
 2. Orders Count
 How many total orders have been placed?
+*/
+select count(distinct OrderID) from [WideWorldImporters].[dbo].[Orders];
+--73595 orders
 
+/*
 3. First and Last Order Dates
 What is the date of the first and the most recent order in the system?
+*/
+select max(orderdate), min(orderdate) from [WideWorldImporters].[dbo].[Orders];
+--latest order 2016-05-31
+--oldest order 2013-01-01
 
+/*
 4. Customers from a City
-List all customers having postal address as "Ghoshville".
+List all customers having postal adress as "Ghoshville".
+*/
+select distinct customername from [WideWorldImporters].[dbo].Customers where postaladdressline2='Ghoshville';
+--6 customers
 
+/*
 5. Products and Categories
 Show all products along with their categories.
+*/
+select distinct stockitemname,stockgroupnames from [WideWorldImporters].[dbo].[StockItems];
+--227 items
 
+/*
 6. Orders in Last 7 Days
 How many orders were placed in the month of MAY 2016?
+*/
+select *  from [WideWorldImporters].[dbo].[Orders]
+where OrderDate like '2016-05%';
+--2047 orders
 
+/*
 7. Order Amounts per Customer
 For each customer, show their name and total amount spent (from orders).
+*/
 
+with orderline_price as (select orderid, orderlineid,(unitprice*pickedquantity+unitprice*pickedquantity*taxrate*0.01) as orderline_amount 
+from [WideWorldImporters].[dbo].OrderLines),
+order_price as (select orderid, sum(orderline_amount) as order_amount from orderline_price group by orderid),
+order_price_customer as (
+select a.*, b.customerid, c.customername from order_price a
+left join [WideWorldImporters].[dbo].[Orders] b on a.OrderID=b.OrderID
+left join [WideWorldImporters].[dbo].Customers c on b.CustomerID=c.CustomerID)
+select customername, sum(order_amount) as amount_spent from order_price_customer 
+group by customername order by sum(order_amount) desc;
+
+/*
 8. Product Quantity Summary
 For each product, show total quantity sold.
+*/
+select StockItemID,Description,sum(pickedquantity) as quantity_sold from [WideWorldImporters].[dbo].OrderLines
+group by StockItemID,Description
+order by sum(pickedquantity) desc;
 
+/*
 9. Completed vs Pending Orders
 Count the number of orders that are not picked.
+*/
+select distinct orderid from [WideWorldImporters].[dbo].OrderLines 
+where PickedQuantity=0;
+--3085 orders 
 
+/*
 10. Most Expensive Product
 Which product has the highest price?
+*/
+select top 1 StockItemID,StockItemName,UnitPrice from [WideWorldImporters].[dbo].[StockItems]
+order by UnitPrice desc;
+--Air cushion machine (Blue)
 
+/*
 11. Recent Signups
 Show the names of customers who signed up in the last 30 days.
+*/
 
+select * from [WideWorldImporters].[dbo].Customers
+where accountopeneddate between '2016-04-07' and '2016-05-07';
+
+--another way
+select * from [WideWorldImporters].[dbo].Customers
+where accountopeneddate between (select dateadd(day,-30,max(accountopeneddate)) from [WideWorldImporters].[dbo].Customers) and 
+(select max(accountopeneddate) from [WideWorldImporters].[dbo].Customers);
+
+/*
 12. Orders per Customer
 How many orders has each customer placed? Show customer name and order count.
+*/
 
+with order_detail as (
+select b.OrderID,b.customerid, c.customername 
+from [WideWorldImporters].[dbo].[Orders] b
+left join [WideWorldImporters].[dbo].Customers c on b.CustomerID=c.CustomerID)
+select customername, count(orderid) as order_count from order_detail 
+group by CustomerName
+order by count(orderid) desc;
+
+/*
 13. Product Prices Over 1000
 List all products priced above 1000.
+*/
+select * from [WideWorldImporters].[dbo].[StockItems]
+where UnitPrice>1000;
 
+/*
 14. Unique Cities
 From how many different cities do we have customers?
+*/
+select distinct PostalAddressLine2 from [WideWorldImporters].[dbo].Customers;
+--452 address
 
+/*
 15. Orders with Total Above 5000
 List all order IDs where the total_amount is more than 5000.
+*/
+with orderline_price as (select orderid, orderlineid,(unitprice*pickedquantity+unitprice*pickedquantity*taxrate*0.01) as orderline_amount 
+from [WideWorldImporters].[dbo].OrderLines)
+select orderid, sum(orderline_amount) as order_price from orderline_price
+group by orderid
+having sum(orderline_amount)>5000
+order by sum(orderline_amount) desc;
+--9906 orders
 
+/*
 16. Customer and Order Join
 Show customer name, order_id, and order_date by joining customers and orders.
+*/
+select b.customername,a.orderid,a.orderdate from [WideWorldImporters].[dbo].[Orders] a
+left join [WideWorldImporters].[dbo].Customers b on a.CustomerID=b.CustomerID;
 
+/*
 17. Product Category Count
 How many products are there in each category?
+*/
+select StockGroupNames, count(stockitemid) as count_items from [WideWorldImporters].[dbo].[StockItems]
+group by StockGroupNames
+order by count(stockitemid) desc;
 
+/*
 18. Customer Email Format Check
 Show all customers whose phone number is not in proper format. Ideally length should be 14 characters.
+*/
+select * from [WideWorldImporters].[dbo].Customers
+where len(phonenumber)<>14;
 
+/*
 19. Orders with No Items
 List any order IDs that have no matching rows in order_items.
+*/
+select a.* from [WideWorldImporters].[dbo].[Orders] a
+where a.OrderID not in (select distinct OrderID from [WideWorldImporters].[dbo].OrderLines);
 
+/*
 20. Gray color Product
 Find all items where the product description contains the color "Gray" 
+*/
+select * from [WideWorldImporters].[dbo].[StockItems]
+where lower(StockItemName) like '%gray%';
+
+
+--21. Top 5 Most Recent Orders
+--Show the 5 most recent orders with order ID, customer name, and order date.
+SELECT TOP (5) o.[OrderID] 
+      ,c.[CustomerName]  
+      ,o.[CustomerID]
+      ,o.[OrderDate] 
+      
+  FROM [WideWorldImporters].[dbo].[Orders] o 
+  LEFT JOIN [WideWorldImporters].[dbo].[Customers] c
+  on o.[CustomerID] = c.[CustomerID]
+  order by o.[OrderDate] DESC
+
+
+--22. Customer Without Orders
+--List all customers who have never placed an order.
+SELECT c.[CustomerID] 
+      ,c.[CustomerName], 
+     o.[OrderID]
+  FROM [WideWorldImporters].[dbo].[Customers] c
+  left join
+  [WideWorldImporters].[dbo].[Orders] o 
+  on c.[CustomerID] =  o.[CustomerID] 
+  where  [OrderID] = '' or  [OrderID]= null or [OrderID] = ' '
+
+
+--23. Orders by City
+--Show the number of orders grouped by customer city.
+SELECT 
+     count (o.[OrderID] ) as total_Orders,
+     (c.[PostalAddressLine2] )
+  FROM [WideWorldImporters].[dbo].[Customers] c
+   left join     
+   [WideWorldImporters].[dbo].[Orders] O
+   on c.[CustomerID] = o.[CustomerID]
+  
+  group by c.[PostalAddressLine2]
+
+
+--24. Total Revenue
+--What is the total revenue from all completed orders?
+SELECT 
+      
+   
+      sum ([PickedQuantity]*[UnitPrice]) as total_revenue
+    
+  FROM [WideWorldImporters].[dbo].[OrderLines]
+
+
+--25. Average Order Value
+--What is the average order value (total_amount) across all orders?
+SELECT 
+AVG (a.total_amt)
+FROM
+ (SELECT  O.[OrderID] ,
+     sum (([Quantity]*[UnitPrice])+([Quantity]*[UnitPrice]*[TaxRate]/100 )) as total_amt
+	 FROM [WideWorldImporters].[dbo].[Orders] O 
+  LEFT JOIN
+       [WideWorldImporters].[dbo].[OrderLines]OL
+	   ON  O.[OrderID]  = OL.[OrderID]    
+	   Group by O.[OrderID]
+	   ) a
+
+
+--26. First Order per Customer
+--Show the first order date for each customer.
+SELECT 
+distinct [CustomerID]
+      ,min([OrderDate])
+
+  FROM [WideWorldImporters].[dbo].[Orders]
+  group by [CustomerID]
+  order by [CustomerID]
+
+
+--27. Orders in 2016
+--How many orders were placed in the calendar year 2016?
+SELECT count([OrderID])
+  FROM [WideWorldImporters].[dbo].[Orders]
+ where [OrderDate] like '%2016%'
+
+
+--28. Product Price Range
+--Find the minimum and maximum price of all products.
+  SELECT  
+   
+     max([UnitPrice]) as max_rate,
+    min( [UnitPrice]) as min_rate
+  FROM [WideWorldImporters].[dbo].[StockItems]
+
+
+--29. Days Since Signup
+--For each customer, show how many days ago they signed up (from today).
+SELECT  
+      [CustomerName]
+      ,[AccountOpenedDate],
+      DATEDIFF(Day,
+	  [AccountOpenedDate], GETDATE()) AS LAST_SIGNEDup_in_days
+  FROM [WideWorldImporters].[dbo].[Customers]
+
+--30. Orders with Product Count
+--For each order, how many different products were included?
+SELECT 
+      [OrderID],
+	  count([OrderLineID]) no_of_products     
+	  FROM [WideWorldImporters].[dbo].[OrderLines]
+	  group by OrderID 
+	  order by OrderID ;
+
+
+--31. Orders Delivered Same Day
+--List orders where the delivery date is the same as the order date.
+SELECT  [OrderID]
+     
+      
+  FROM [WideWorldImporters].[dbo].[Orders]
+  where [OrderDate] = [ExpectedDeliveryDate]
+
+--32. Products Never Ordered
+--Find products that were never included in any order.
+SELECT Z.*
+FROM 
+(SELECT 
+      
+      s.[StockItemID] ,
+	  case 
+	  when  O.StockItemID = s.StockItemID then 'ordered' 
+	  else 'not_ordered'
+	  END AS IF_ORDERED
+	  FROM
+	  [WideWorldImporters].[dbo].[StockItems] s
+  left join 
+  [WideWorldImporters].[dbo].[OrderLines] O
+  On O.StockItemID = s.StockItemID )Z
+  WHERE Z.IF_ORDERED = 'not_ordered';
+
+---CODE 2
+ SELECT * 
+  FROM [WideWorldImporters].[dbo].[StockItems] s
+  WHERE  s.StockItemID NOT IN 
+  ( SELECT DISTINCT StockItemID 
+  FROM [WideWorldImporters].[dbo].[OrderLines])
+
+
+--33. Category of Most Expensive Product
+--What category does the most expensive product belong to?
+SELECT 
+top (1)
+( [UnitPrice]) as most_expensive_product
+      ,[StockGroupNames]
+  FROM [WideWorldImporters].[dbo].[StockItems]
+--group by [StockGroupNames]
+order by   UnitPrice  desc
+
+
+--34. Customers with only 1 order
+--Are there any customers who have placed only 1 order till now?
+SELECT 
+      c.[CustomerID] ,
+     count(O.[OrderID])  as Order_count
+		
+  FROM [WideWorldImporters].[dbo].[Customers] c
+  left join 
+  [WideWorldImporters].[dbo].[Orders] O
+  On c.CustomerID = O.CustomerID 
+ group by c.[CustomerID] 
+      
+ having  count(O.[OrderID])  = 1
+ Order by c.[CustomerID] 
+
+
+--35. Orders with High Quantity
+--List orders that included any product with a quantity of 10 or more.
+SELECT 
+      [OrderID]
+      
+      ,[Description]
+      ,[Quantity]
+      
+       FROM [WideWorldImporters].[dbo].[OrderLines]
+where [Quantity] >=10
+Order by [OrderID]
+
+
+--36. Category with Most Products
+--Which product category has the highest number of products?
+SELECT count ([stockItemID]) as number_of_products
+      
+      ,[StockGroupNames]
+  FROM [WideWorldImporters].[dbo].[StockItems]
+  group by [StockGroupNames]
+  order by count ([stockItemID]) desc
+
+
+--37. Customer with maximum Order
+--Find customer who has placed maximum order.
+SELECT  TOP (5)
+      C.[CustomerID]
+      ,C.[CustomerName]
+	   ,COUNT(O.[OrderID]) AS ORDER_COUNT     
+  FROM [WideWorldImporters].[dbo].[Customers]C
+left join
+[WideWorldImporters].[dbo].[Orders] O
+ON C.CustomerID =O.CustomerID 
+GROUP BY  C.[CustomerID],C.[CustomerName]
+ORDER BY COUNT(O.[OrderID]) DESC
+
+
+--38. Order Date and Weekday
+--For each order, show the order date and the day of the week it was placed.
+SELECT  [OrderID]
+   
+      ,[OrderDate],
+
+     DATENAME(WEEKDAY,[OrderDate] ) AS D_NAME
+  FROM [WideWorldImporters].[dbo].[Orders]
+
+
+--39. Orders not invoiced
+--List orders that don’t have invoices generated.
+SELECT 
+      I.[InvoiceID]  
+      ,O.[OrderID]
+      
+     
+  FROM [WideWorldImporters].[dbo].[Orders] O
+  LEFT JOIN
+  [WideWorldImporters].[dbo]. [Invoices]I
+  ON  I.[OrderID] = O.[OrderID] 
+  
+  WHERE I.[InvoiceID] IS NULL
+
+
+--40. Customers with phone is not Provided
+--Show customers where phone number is NULL or empty.
+SELECT [CustomerID]
+      ,[CustomerName]
+
+      ,[PhoneNumber]
+      
+  FROM [WideWorldImporters].[Sales].[Customers]
+WHERE [PhoneNumber] ='' OR [PhoneNumber] =' ' OR [PhoneNumber]= NULL 
+
+
+--41. Product Sales Summary
+--For each product, show the total quantity sold and total revenue (price × quantity).
+SELECT
+ a.[StockItemID]
+      ,a.[StockItemName]
+      ,a.[UnitPrice],
+	  sum(b.[Quantity]) as quantity_sold, a.[UnitPrice]*sum(b.[Quantity]) as revenue
+  FROM [WideWorldImporters].[dbo].[StockItems] a
+  left join [WideWorldImporters].[dbo].[OrderLines] b
+  on a.StockItemID=b.StockItemID
+  group by a.[StockItemID]
+      ,a.[StockItemName]
+      ,a.[UnitPrice];
+
+
+--42. Customers Who Placed Orders in December
+--List customers who placed at least one order in December (any year).
+SELECT 
+c.CustomerName ,
+     c.[CustomerID] 
+    
+		
+  FROM [WideWorldImporters].[dbo].[Customers] c
+  left join 
+  [WideWorldImporters].[dbo].[Orders] O
+  On c.CustomerID = O.CustomerID 
+ WHERE OrderDate LIKE '%-12-%'
+ GROUP BY  c.[CustomerID], c.CustomerName
+ ORDER BY c.[CustomerID]
+
+
+--43.Customer who placed highest order
+--Find customer who placed the order with highest value.
+SELECT  top(1)
+      c.CustomerName ,
+       O.CustomerID ,
+       O. [OrderID],
+       SUM([Quantity]*[UnitPrice])ord_value
+	  
+  FROM [WideWorldImporters].[dbo].[OrderLines]OL
+  left join
+  [WideWorldImporters].[dbo].[Orders] O
+  on O.[OrderID] = OL. [OrderID]
+  left join
+  [WideWorldImporters].[dbo].[Customers]  C
+  on O.[CustomerID] = C. [CustomerID] 
+  group by O.[OrderID], O.CustomerID , c.CustomerName
+  order by[ord_value] desc
+
+
+--44. Number of Orders per Month
+--Show how many orders were placed each month in 2013.
+SELECT 
+month([OrderDate])as month_ ,
+
+count([OrderID]) as total_num     
+    
+  FROM [WideWorldImporters].[dbo].[Orders]
+  where YEAR([OrderDate]) =2013
+  GROUP BY month([OrderDate])
+  order by month_;
+
+--45. Product Count per Order
+--For each order, how many unique products were ordered?
+SELECT 
+      [OrderID],
+	 count(distinct[OrderLineID]) as Num_of_prdts      
+  FROM [WideWorldImporters].[dbo].[OrderLines]
+  group by  [OrderID]
+  order by OrderID 
+
+--46. Customer Signup Year
+--For each customer, extract the year they signed up.
+SELECT  [CustomerID]
+      ,[CustomerName],
+      
+   YEAR([AccountOpenedDate])  AS signed_up_YEAR
+   FROM [WideWorldImporters].[dbo].[Customers]
+
+
+--47. Customers Whose Name Starts with ‘A’
+--List all customers whose names begin with the letter A.
+SELECT  [CustomerID]
+      ,[CustomerName]
+      
+  FROM [WideWorldImporters].[dbo].[Customers]
+  WHERE [CustomerName] LIKE 'A%'
+
+
+--48. Find Duplicate Phone
+--Are there any customers with duplicate phone numbers ?
+SELECT [CustomerID]
+      ,[CustomerName]
+         ,count([PhoneNumber]) as duplicate_phone_numbers
+      
+  FROM [WideWorldImporters].[Sales].[Customers]
+  group by [CustomerID] ,[CustomerName]
+  having count([PhoneNumber]) > 1
+
+
+--49. Orders Made on a Weekend
+--Find orders placed on a Saturday or Sunday.
+SELECT [OrderID],
+     
+      DATENAME ( WEEKDAY ,[OrderDate])as day_
+      
+  FROM [WideWorldImporters].[dbo].[Orders]
+  where  DATENAME ( WEEKDAY ,[OrderDate]) in ( 'Saturday', 'Sunday')
+
+
+--50. Product Categories Starting with ‘E’
+--List all unique product categories that start with the letter ‘E’.
+SELECT 
+    DISTINCT ([StockGroupNames])
+  FROM [WideWorldImporters].[dbo].[StockItems]
+where [StockGroupNames] like 'E%'
+
+
+--51. Top-Selling Product by Revenue
+--Which product generated the highest revenue overall?
+SELECT top(1) 
+     [StockItemID]
+      ,[Description]
+      ,sum([Quantity]*[UnitPrice]) as revenue 
+	 
+  FROM [WideWorldImporters].[dbo].[OrderLines]
+  group by [StockItemID] ,[Description]
+  order by  revenue desc
+
+
+--52. Percentage of Completed Orders
+--What percentage of total orders are marked as ‘completed’?
+SELECT 
+    CAST(COUNT(DISTINCT iv.OrderID) AS FLOAT) / COUNT(DISTINCT o.OrderID) * 100 AS Completed_Order_Percentage
+FROM [WideWorldImporters].[dbo].[Orders] o
+LEFT JOIN [WideWorldImporters].[dbo].[Invoices] iv
+    ON o.OrderID = iv.OrderID;
+
+
+--53. Products Sold in Only One Order
+--Identify products that have been sold in only one distinct order.
+SELECT 
+      
+        [Description],count(distinct [OrderID])AS C
+	    
+  FROM [WideWorldImporters].[dbo].[OrderLines]
+   group by    [Description] 
+   having count(distinct [OrderID]) =1
+
+
+--54. Average Items per Order
+--On average, how many items are there in each order?
+SELECT
+avg(items_per_ord) as avg_items_per_ord
+from
+(SELECT 
+     [OrderID],
+	count(OrderLineID) as items_per_ord 
+  FROM [WideWorldImporters].[dbo].[OrderLines]
+  group by  [OrderID]) z
+
+
+--55. Order Fulfillment Delay
+--Show the number of days it took to fulfill each order (fulfillment_date - order_date).
+SELECT [OrderID],
+      
+     DATEDIFF(DAY ,[OrderDate],[ExpectedDeliveryDate]) AS fulfillment_date
+      
+  FROM [WideWorldImporters].[dbo].[Orders]
+
+
+--56. List Product Prices by Category
+--For each category, list all products sorted by price descending.
+SELECT
+     [StockGroupNames],
+      [StockItemName],
+      [UnitPrice]
+      
+  FROM [WideWorldImporters].[dbo].[StockItems]
+ 
+  ORDER BY [StockGroupNames], [UnitPrice] DESC 
+
+
+--57. Top Customer by Total quality 
+--Who is the customer that has placed the most order in total?
+  SELECT
+      TOP(1)
+      O.[CustomerID] ,
+	 C.[CustomerName],
+	 COUNT(O.[OrderID]) AS most_order
+
+  FROM [WideWorldImporters].[dbo].[Orders]O
+  LEFT JOIN 
+  [WideWorldImporters].[dbo].[Customers]C
+ON  O.[CustomerID] = C.[CustomerID] 
+GROUP BY  O.[CustomerID] ,C.[CustomerName]
+ORDER BY most_order DESC
+
+
+--58. Longest Customer Name
+--Which customer has the longest name?
+SELECT 
+   TOP(5)
+   CustomerName,
+    LEN(CustomerName) AS longest_name 
+      
+  FROM [WideWorldImporters].[dbo].[Customers]
+  ORDER BY longest_name DESC
+
+
+--59. Orders with No Fulfillment
+--List all orders that have not been delivered.
+SELECT  
+      O. [CustomerID]
+      ,O.[OrderID],
+	  O.[OrderDate],
+	  Iv.[InvoiceDate]
+
+     FROM [WideWorldImporters].[dbo].[Orders] O
+	 LEFT JOIN 
+	 [WideWorldImporters].[dbo].[Invoices] Iv
+	 on  O.[OrderID] = Iv.[OrderID]  
+  where   Iv.[InvoiceDate] is null  or  Iv.[InvoiceDate]= '' or  Iv.[InvoiceDate]= ' '
+  order by      O. [CustomerID], O.[OrderID]
+
+
+--60. Product Name Word Count
+--For each product, count how many words are in its name.
+SELECT
+  (StockItemName),
+      len(StockItemName) - len(REPLACE ([StockItemName] , ' ','')) +1 AS WORD_COUNT 
+	  FROM [WideWorldImporters].[dbo].[StockItems];
 
-21. Top 5 Most Recent Orders
-
-Show the 5 most recent orders with order ID, customer name, and order date.
-
-22. Customer Without Orders
-
-List all customers who have never placed an order.
-
-23. Orders by City
-
-Show the number of orders grouped by customer city.
-
-24. Total Revenue
-
-What is the total revenue from all completed orders?
-
-25. Average Order Value
-
-What is the average order value (total_amount) across all orders?
-
-26. First Order per Customer
-
-Show the first order date for each customer.
-
-27. Orders in 2017
-
-How many orders were placed in the calendar year 2016?
-
-28. Product Price Range
-
-Find the minimum and maximum price of all products.
-
-29. Days Since Signup
-
-For each customer, show how many days ago they signed up (from today).
-
-30. Orders with Product Count
-
-For each order, how many different products were included?
-
-31. Orders Delivered Same Day
-
-List orders where the delivery date is the same as the order date.
-
-32. Products Never Ordered
-
-Find products that were never included in any order.
-
-33. Category of Most Expensive Product
-
-What category does the most expensive product belong to?
-
-34. Customers with only 1 order
-
-Are there any customers who have placed only 1 order till now?
-
-35. Orders with High Quantity
-
-List orders that included any product with a quantity of 10 or more.
-
-36. Category with Most Products
-
-Which product category has the highest number of products?
-
-37. Customer with maximum Order
-
-Find customer who has placed maximum order.
-
-38. Order Date and Weekday
-
-For each order, show the order date and the day of the week it was placed.
-
-39. Orders not invoiced
-
-List orders that don’t have invoices generated.
-
-40. Customers with phone is not Provided
-
-Show customers where phone number is NULL or empty.
-
-41. Product Sales Summary
-
-For each product, show the total quantity sold and total revenue (price × quantity).
-
-42. Customers Who Placed Orders in December
-
-List customers who placed at least one order in December (any year).
-
-43.Customer who placed highest order
-
-Find customer who placed the order with highest value.
-
-44. Number of Orders per Month
-
-Show how many orders were placed each month in 2013.
-
-45. Product Count per Order
-
-For each order, how many unique products were ordered?
-
-46. Customer Signup Year
-
-For each customer, extract the year they signed up.
-
-47. Customers Whose Name Starts with ‘A’
-
-List all customers whose names begin with the letter A.
-
-48. Find Duplicate Phone
-
-Are there any customers with duplicate phone numbers ?
-
-49. Orders Made on a Weekend
-
-Find orders placed on a Saturday or Sunday.
-
-50. Product Categories Starting with ‘E’
-
-List all unique product categories that start with the letter ‘E’.
-
-51. Top-Selling Product by Revenue
-
-Which product generated the highest revenue overall?
-
-52. Percentage of Completed Orders
-
-What percentage of total orders are marked as ‘completed’?
-
-53. Products Sold in Only One Order
-
-Identify products that have been sold in only one distinct order.
-
-54. Average Items per Order
-
-On average, how many items are there in each order?
-
-55. Order Fulfillment Delay
-
-Show the number of days it took to fulfill each order (fulfillment_date - order_date).
-
-56. List Product Prices by Category
-
-For each category, list all products sorted by price descending.
-57. Top Customer by Total quality 
-
-Who is the customer that has placed the most order in total?
-
-58. Longest Customer Name
-
-Which customer has the longest name?
-
-59. Orders with No Fulfillment
-
-List all orders that have not been delivered.
-
- 60. Product Name Word Count
-
-For each product, count how many words are in its name.

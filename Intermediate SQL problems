@@ -1,78 +1,522 @@
+/*
 1. Customer and Last Order Date
 For each customer, show their most recent order date.
+*/
+SELECT 
+     
+      [CustomerID]
+      ,MAX ([OrderDate]) AS most_recent_order_date
 
+
+  FROM [WideWorldImporters].[dbo].[Orders]
+  GROUP BY   [CustomerID]
+  ORDER  BY   [CustomerID];
+
+
+/*
 2. Customers with Orders in 2 Different Months
 Find customers who placed orders in at least two different months.
+*/
+SELECT CustomerID
+FROM [WideWorldImporters].[dbo].[Orders]
+GROUP BY CustomerID
+HAVING COUNT(DISTINCT FORMAT(OrderDate, 'yyyy-MM')) >= 2
+ORDER BY CustomerID;
 
+
+/*
 3. Week-wise revenue 
 Create a table that shows the revenue for each week right from 2013 to 2016. Weeks should be named in format ‘Week1-2013’.
+*/
+SELECT 
+    'Week' + CAST(DATEPART(WEEK, O.OrderDate) AS VARCHAR) + '-' + CAST(YEAR(O.OrderDate) AS VARCHAR) AS Week_Name,
+   -- COUNT(O.OrderID) AS C,
+    SUM(OL.Quantity * OL.UnitPrice) AS revenue
+FROM 
+    [WideWorldImporters].[dbo].[OrderLines] OL
+LEFT JOIN 
+    [WideWorldImporters].[dbo].[Orders] O ON O.OrderID = OL.OrderID
+WHERE 
+    YEAR(O.OrderDate) IN (2013, 2014, 2015, 2016)
+GROUP BY 
+    DATEPART(WEEK, O.OrderDate), YEAR(O.OrderDate)
+ORDER BY 
+    YEAR(O.OrderDate), DATEPART(WEEK, O.OrderDate);
 
+
+/*
 4. Monthly Revenue Trend
 Show the total revenue per month from 2013 to 2016.
+*/
 
+SELECT 
+
+   YEAR(O.OrderDate)  AS YEAR_Name,
+   MONTH(O.OrderDate) AS MONTH_NAME,
+    SUM(OL.Quantity * OL.UnitPrice) AS revenue
+FROM 
+    [WideWorldImporters].[dbo].[OrderLines] OL
+LEFT JOIN 
+    [WideWorldImporters].[dbo].[Orders] O ON O.OrderID = OL.OrderID
+WHERE 
+    YEAR(O.OrderDate) IN (2013, 2014, 2015, 2016)
+GROUP BY 
+	 YEAR(O.OrderDate),MONTH(O.OrderDate)
+ORDER BY 
+    YEAR(O.OrderDate),MONTH(O.OrderDate);
+
+
+/*
 5. Most Recent Order per Customer
 For each customer, show their latest order ID, order date, and order total.
+*/
+SELECT 
+C.[CustomerID],
+      C.[CustomerName]
+       ,MAX (O.[OrderID]) AS LAST_Order_ID
+      ,MAX (O.[OrderDate]) AS LAST_Order_Date
+	 ,COUNT (O.[OrderID]) AS total_order
+      
+  FROM [WideWorldImporters].[dbo].[Customers]C
+LEFT JOIN
+[WideWorldImporters].[dbo].[Orders]O
+ON C.[CustomerID] = O.[CustomerID]
+GROUP BY C.[CustomerID] ,C.[CustomerName] 
+Order BY C.[CustomerID];
 
+
+
+/*
 6. Customer Order Frequency
 For each customer, show how many days on average pass between their orders.
+*/
+WITH TEMP1 AS (SELECT [OrderID]
+      ,[CustomerID]
+      ,[OrderDate],
+	  LEAD([OrderDate]) OVER (PARTITION BY [CustomerID] ORDER BY  [OrderDate]) AS LEAD_DATE
+  FROM [WideWorldImporters].[dbo].[Orders]),
+   TEMP2 AS (
+  SELECT *, DATEDIFF(DAY,OrderDate,LEAD_DATE) AS DIFF1 FROM TEMP1)
+ SELECT A.[CustomerID],B.CustomerName,AVG(A.DIFF1) AS AVERAGE_RDER_DIFF FROM TEMP2 A
+ LEFT JOIN [WideWorldImporters].[dbo].[Customers] B On A.CustomerID=B.CustomerID
+ GROUP BY A.[CustomerID],B.CustomerName;
 
+
+/*
 7. Fulfillment Delay Categories
 For each fulfilled order, categorize delay as: •	'Same Day' if fulfilled same day
 •	'1-3 Days'
 •	'4-7 Days'
 •	'More than a Week'
+*/
+with temp_table1 as (SELECT IV.[CustomerID],
+      IV.[InvoiceID]
+      ,IV.[OrderID]
+	  ,O.[OrderDate]
+      ,IV.[InvoiceDate],
+    DATEDIFF(DAY,O.[OrderDate],IV.[InvoiceDate])   AS Fulfillment,
+  CASE 
+  WHEN DATEDIFF(DAY,O.[OrderDate],IV.[InvoiceDate]) =0 THEN 'Same Day'
+  WHEN DATEDIFF(DAY,O.[OrderDate],IV.[InvoiceDate]) BETWEEN 1 and 3 THEN '1-3 Days'
+  WHEN DATEDIFF(DAY,O.[OrderDate],IV.[InvoiceDate]) BETWEEN 4 and 7 THEN '4-7 Days'
+  WHEN DATEDIFF(DAY,O.[OrderDate],IV.[InvoiceDate]) >7 THEN 'More than a Week'
+  ELSE 'L0NG_TIME'
+  END as fulfillment_category  
+  FROM [WideWorldImporters].[dbo].[Invoices]IV
+LEFT JOIN
+ [WideWorldImporters].[dbo].[Orders] O
+ ON  IV.orderid=o.orderid)
+ --ORDER BY IV.[CustomerID], IV.[InvoiceID],IV.[OrderID]
+ select fulfillment_category, count(distinct orderid) as order_count from temp_table1
+ group by fulfillment_category;
 
+
+/*
 8. Customer’s First Month Activity
 For each customer, count how many orders they placed in the same month they signed up.
+*/
+SELECT  C.[CustomerID]
+      ,C.[CustomerName]
+      ,C.[AccountOpenedDate]
+	  ,COUNT(O.[OrderID]) AS NUMBERS_0F_0RDER,
+      MONTH (c.[AccountOpenedDate]) AS AccountOpened_M0NTH
+  FROM [WideWorldImporters].[dbo].[Customers]C
+  LEFT JOIN 
+   [WideWorldImporters].[dbo].[Orders]O
+ ON O.[CustomerID] = C.[CustomerID] AND 
+ MONTH ( C.[AccountOpenedDate]) =MONTH (O.OrderDate ) 
+ AND
+ YEAR( C.[AccountOpenedDate]) =YEAR (O.OrderDate )
+ GROUP BY C.[CustomerID]  ,C.[CustomerName],C.[AccountOpenedDate];
+ 
 
+/*
 9. Product Pairs Frequently Bought Together
 Show product pairs that were ordered together in the same order more than 10 times.
+*/
+SELECT 
+    
+     OL1.[StockItemID],
+	  OL2.[StockItemID] ,    
+      count (*) as no_of_times_bought_together 
+  FROM [WideWorldImporters].[dbo].[OrderLines]OL1
+  join
+  [WideWorldImporters].[dbo].[OrderLines]OL2
+  ON OL1.OrderID  = OL2.OrderID 
+  AND OL1.[StockItemID] < OL2.[StockItemID]
+  group by OL1.[StockItemID],OL2.[StockItemID]  
+  having count (*) > 10
+  order by no_of_times_bought_together desc;
 
+
+/*
 10. Revenue Difference Between Consecutive Months
 Show monthly revenue and the difference in revenue compared to the previous month.
+*/
+WITH MONTH_REVENUE AS  (  
+    SELECT 
+   YEAR(O.OrderDate)  AS YEAR_Name,
+   MONTH(O.OrderDate) AS MONTH_NAME,
+    SUM(OL.Quantity * OL.UnitPrice) AS revenue
+	FROM 
+    [WideWorldImporters].[dbo].[OrderLines] OL
+LEFT JOIN 
+    [WideWorldImporters].[dbo].[Orders] O ON O.OrderID = OL.OrderID
 
+GROUP BY 
+	 YEAR(O.OrderDate),MONTH(O.OrderDate)
+
+)
+SELECT 
+YEAR_Name,  MONTH_NAME ,revenue,
+LAG(revenue) OVER (ORDER BY YEAR_Name,  MONTH_NAME) AS LAST_MONTH_REV,
+revenue - LAG(revenue) OVER (ORDER BY YEAR_Name,  MONTH_NAME) AS MONTH_REV_DIFF
+FROM  MONTH_REVENUE
+ORDER BY YEAR_Name, MONTH_NAME;
+
+
+/*
 11. Top Product per Month
 For each month, find the product that generated the highest revenue.
+*/
+WITH monthly_revenue AS (
+    SELECT
+        CAST(DATEFROMPARTS(YEAR(I.InvoiceDate), MONTH(I.InvoiceDate), 1) AS DATE) AS month,
+        StockItemID,
+        SUM(IL.Quantity * IL.UnitPrice) AS total_revenue
+    FROM
+        [WideWorldImporters].[dbo].[Invoices] I
+        JOIN [WideWorldImporters].[dbo].[InvoiceLines] IL
+            ON I.InvoiceID = IL.InvoiceID
+    GROUP BY
+        YEAR(I.InvoiceDate), MONTH(I.InvoiceDate), StockItemID
+),
+ranked_products AS (
+    SELECT
+        month,
+        StockItemID,
+        total_revenue,
+        DENSE_RANK() OVER (PARTITION BY month ORDER BY total_revenue DESC) AS revenue_rank
+    FROM monthly_revenue
+)
+SELECT
+    month,
+    StockItemID,
+    total_revenue
+FROM ranked_products
+WHERE revenue_rank = 1
+ORDER BY month;
+--Note: above query only shows top product for the month of Jan'2013 as InvoiceLine table has only data for Jan 2013.
 
+
+/*
 12. Average Fulfillment Time per Product
 Calculate the average number of days it takes to fulfill each product (based on all orders that include it).
+*/
+with temp_table1 as
+    (SELECT
+      IV.[OrderID]
+	  ,O.[OrderDate]
+      ,IV.[InvoiceDate],
+    DATEDIFF(DAY,O.[OrderDate],IV.[InvoiceDate])   AS Fulfillment
+  
+  FROM [WideWorldImporters].[dbo].[Invoices]IV
+LEFT JOIN
+ [WideWorldImporters].[dbo].[Orders] O
+ ON  IV.orderid=o.orderid)
+ 
+ select  avg(Fulfillment) as avg_order_Fulfillment  from temp_table1;
 
+
+/*
 13. Customers with 3+ Orders in a Month
 Find customers who placed 3 or more orders in any calendar month.
+*/
+select distinct z.customerid from (SELECT  
+     distinct [CustomerID],
+	  count([OrderID]) as Order_count,
+    year ( [OrderDate]) as year_,
+ month( [OrderDate]) as month_
+ FROM [WideWorldImporters].[dbo].[Orders]
+  group by [CustomerID], year ( [OrderDate]),
+ month( [OrderDate])
+  
+  having count([OrderID]) >=3
+  --order by [CustomerID],year ( [OrderDate]),month( [OrderDate])
+ )z
+ order by z.[CustomerID];
 
+
+/*
 14. Customer Loyalty Tier
 Assign customers to tiers based on total spend:
 •	Platinum > ₹50,000
 •	Gold > ₹20,000
 •	Silver > ₹5,000
 •	Bronze ≤ ₹5,000
+*/
 
+
+select z.customerID, sum(z.order_total) as customer_total,
+case
+when sum(z.order_total)>  50000 then 'Platinum'
+when sum(z.order_total)> 20000 then 'gold'
+when sum(z.order_total)> 5000 then 'silver'
+when sum(z.order_total) <= 5000 then 'Bronze'
+else 'NA'  
+end as Customer_Loyalty_Tier
+from (
+select o.OrderID,o.CustomerID,sum(ol.Quantity*ol.UnitPrice*1.15) as order_total
+from [WideWorldImporters].[dbo].[Orders] O
+left join [WideWorldImporters].[dbo].[OrderLines] OL
+on O.OrderID=OL.OrderID
+group by o.OrderID,o.CustomerID)z
+group by z.CustomerID
+order by z.CustomerID;
+
+/*
 15. Orders with High Variation in Item Prices
 Identify orders where the price difference between the highest and lowest priced item is greater than ₹1,000.
+*/
+SELECT
+      [OrderID]
+      ,max([UnitPrice]) as max_Price
+	  ,min([UnitPrice]) as min_Price
+	  ,(max([UnitPrice]) - min([UnitPrice])) as price_diff
+  FROM [WideWorldImporters].[dbo].[OrderLines]
+  group by [OrderID]
+  having   (max([UnitPrice]) - min([UnitPrice])) > 1000
+  order by [OrderID];
 
+/*
 16. Returning vs New Customers
 For each month, count how many customers were new (first-time orders) vs returning.
+*/
+WITH First_Orders AS (
+    SELECT 
+        CustomerID,
+        MIN(OrderDate) AS First_Order_Date
+    FROM [WideWorldImporters].[dbo].[Orders]
+    GROUP BY CustomerID
+),
 
+
+Orders_Status AS (
+    SELECT 
+        o.CustomerID,
+        o.OrderID,
+        o.OrderDate ,
+        FORMAT(o.OrderDate, 'yyyy-MM') AS Order_Month_,
+        f.First_Order_Date,
+        CASE 
+            WHEN o.OrderDate  = f.First_Order_Date THEN 'New'
+            ELSE 'Returning'
+        END AS Customer_Type
+    FROM [WideWorldImporters].[dbo].[Orders] o
+    JOIN
+	First_Orders f
+	ON o.CustomerID = f.CustomerID
+)
+
+
+SELECT
+    Order_Month_ ,
+    Customer_Type ,
+    COUNT(DISTINCT CustomerID) AS Customer_Count
+FROM Orders_Status 
+GROUP BY Order_Month_ , Customer_Type 
+ORDER BY Order_Month_ , Customer_Type ;
+
+/*
 17. Churn Candidates
 Find customers who have not placed any orders in the last 90 days but had at least 2 orders before that.
+*/
+WITH Orders_Before_90_Days AS (
+    SELECT CustomerID
+    FROM [WideWorldImporters].[dbo].[Orders]
+    WHERE OrderDate < DATEADD(DAY, -90, '2016-05-31')
+    GROUP BY CustomerID
+    HAVING COUNT(*) >= 2
+),
+Recent_Orders AS (
+    SELECT DISTINCT CustomerID
+    FROM [WideWorldImporters].[dbo].[Orders]
+    WHERE OrderDate >= DATEADD(DAY, -90, '2016-05-31')
+)
 
+
+SELECT ob.CustomerID
+FROM Orders_Before_90_Days ob
+LEFT JOIN Recent_Orders  r 
+ON ob.CustomerID = r.CustomerID
+WHERE r.CustomerID IS NULL;
+
+/*
 18. Daily Average Revenue by Weekday
 For each weekday (Mon to Sun), calculate the average total revenue per day.
+*/
+SELECT 
+DATENAME (WEEKDAY ,OrderDate  ) as WEEK_DAY,
+avg(Rev) as avg_revenue
+from
+(
+SELECT 
+    o.OrderDate,
+      
+   SUM([Quantity]*[UnitPrice]) AS Rev 
+	  
+  FROM [WideWorldImporters].[dbo].[Orders]o
+  left join 
+  [WideWorldImporters].[dbo]. [OrderLines]ol
+  on o.[OrderID]=ol.[OrderID]
+group by o.[OrderDate] )z 
+group by DATENAME (WEEKDAY ,OrderDate );
 
+
+/*
 19. First Purchase Gap
 For each customer, calculate how many days passed between their signup and their first purchase.
+*/
+SELECT C.[CustomerID]
+      ,[CustomerName]
+      ,[AccountOpenedDate]
+      ,MIN([OrderDate]) AS FIRST_ORD_DATE
+	 , DATEDIFF(DAY,[AccountOpenedDate],MIN([OrderDate])) AS Day_diff_in_signup_and_first_ord	  
+	  FROM [WideWorldImporters].[dbo].[Customers]C
+  LEFT JOIN 
+  [WideWorldImporters].[dbo].[Orders]O
+  ON C.[CustomerID] =O.[CustomerID]
+  GROUP BY C.[CustomerID],[CustomerName],[AccountOpenedDate]
+  ORDER BY C.[CustomerID];
 
+/*
 20. Consecutive Orders Within 7 Days
 For each customer, find any two consecutive orders that were placed within 7 days of each other.
+*/
+WITH Ordered_ AS (
+    SELECT 
+        o.CustomerID,
+        o.OrderID,
+        o.OrderDate,
+        ROW_NUMBER() OVER (PARTITION BY o.CustomerID ORDER BY o.OrderDate) AS rn
+    FROM WideWorldImporters.dbo.Orders o
+),
+Consecutive_Orders AS (
+    SELECT 
+        o1.CustomerID,
+        o1.OrderID AS OrderID_1,
+        o1.OrderDate AS Order_Date1,
+        o2.OrderID AS OrderID_2,
+        o2.OrderDate AS Order_Date2,
+        DATEDIFF(DAY, o1.OrderDate, o2.OrderDate) AS Days_diff_in_ord
+		FROM Ordered_ o1
+      JOIN Ordered_ o2
+        ON o1.CustomerID = o2.CustomerID
+        AND o1.rn + 1 = o2.rn
+    WHERE DATEDIFF(DAY, o1.OrderDate, o2.OrderDate) <= 7
+)
+SELECT * FROM Consecutive_Orders
+ORDER BY CustomerID, Order_Date1;
 
+/*
 21. Top Category in Each Quarter
 For each calendar quarter, identify the category with the highest total revenue.
+*/
 
+
+
+select z1.* from (select z.order_quarter,z.StockGroupNames, sum(z.revenue) as group_revenue,
+dense_rank() over (partition by z.order_quarter order by sum(z.revenue) desc) as revenue_rank
+from
+(select OL.OrderID, OL.OrderLineID, OL.stockitemid, OL.Quantity*OL.UnitPrice as revenue, SI.StockGroupNames, o.OrderDate,
+concat(datepart(year,o.OrderDate),'-',datepart(quarter,o.OrderDate)) as order_quarter
+from [WideWorldImporters].[dbo].[OrderLines] OL
+left join [WideWorldImporters].[dbo].[StockItems] SI
+on OL.StockItemID=SI.StockItemID
+left join [WideWorldImporters].[dbo].[Orders] O 
+on O.OrderID=ol.OrderID) z
+group by z.order_quarter,z.StockGroupNames)z1
+where z1.revenue_rank=1
+order by order_quarter;
+
+
+
+/*
 22. Customer Lifetime Value
 Calculate total spend, number of orders, and average order value per customer.
+*/
+SELECT 
+     c.[CustomerID],
+	 c.[CustomerName],   
+	  count(o.[OrderID]) as  order_count
+	  ,sum(([Quantity]*[UnitPrice])+([Quantity]*[UnitPrice]*[TaxRate]/100)) as total_spend
+      
+      
+FROM [WideWorldImporters].[dbo].[Customers]c
+left join
+[WideWorldImporters].[dbo].[Orders]o
+on  o.[CustomerID]= c.[CustomerID]
+left join 
+[WideWorldImporters].[dbo].[OrderLines]ol
+on o.[OrderID] = ol.[OrderID]
+group by  c.[CustomerName]  ,c.[CustomerID]
+order by c.[CustomerID];
 
+/*
 23. Multiple Categories in One Order
 For each order, return a flag (TRUE/FALSE) indicating whether it includes items from more than one category.
+*/
+select 
+orderid  ,
+case 
+when count (distinct si.StockGroupNames ) > 1 then 'true'
+else 'false'
+end as Multiple_Categories
 
+from
+[WideWorldImporters].[dbo].[OrderLines]ol
+left join 
+[WideWorldImporters].[dbo].[StockItems] si
+on  ol.StockItemID = si.StockItemID 
+group by orderid ;
+
+/*
 24. Product Sales Drop Month-over-Month
-For each product, identify months where sales quantity dropped compared to the previous month.
+For each product, identify months where sales revenue dropped compared to the previous month.
+*/
+
+select z2.*,z2.next_month_product_revenue-z2.product_revenue as diff_revenue from
+(select z1.*,lead(z1.order_month) over (partition by z1.stockitemid order by z1.order_month) as next_month,
+lead(z1.product_revenue) over (partition by z1.stockitemid order by z1.order_month) as next_month_product_revenue from
+(select z.StockItemID,z.order_month,sum(revenue) as product_revenue from 
+(select OL.OrderID, OL.OrderLineID, OL.stockitemid, OL.Quantity*OL.UnitPrice as revenue, o.OrderDate,
+concat(SUBSTRING(cast(o.OrderDate as varchar),1,4), SUBSTRING(cast(o.OrderDate as varchar),6,2)) as order_month
+
+from [WideWorldImporters].[dbo].[OrderLines] OL
+left join [WideWorldImporters].[dbo].[Orders] O 
+on O.OrderID=ol.OrderID)z
+group by z.StockItemID,z.order_month)z1)z2
+where z2.next_month_product_revenue-z2.product_revenue<0
+order by z2.StockItemID,z2.order_month;
+
+

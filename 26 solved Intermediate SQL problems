@@ -520,3 +520,49 @@ where z2.next_month_product_revenue-z2.product_revenue<0
 order by z2.StockItemID,z2.order_month;
 
 
+/*
+25. Top Spenders in the Last 6 Months
+Write a query to find the top 5 customers who have spent the most in the last 6 months. Include customer name, total spent, and number of orders.
+*/
+select top 5 z.* from 
+(select t1.CustomerName, count(t1.invoiceid) as order_count, sum(t1.gross_amount) as total_spent from
+
+(select a.invoiceid, a.gross_amount, c.CustomerName from
+
+(select invoiceid, sum(extendedprice) as gross_amount from [WideWorldImporters].[dbo].[InvoiceLines]
+group by InvoiceID) a
+left join [WideWorldImporters].[dbo].[Invoices] b on a.InvoiceID=b.InvoiceID
+left join [WideWorldImporters].[dbo].Customers c on b.CustomerID=c.CustomerID)t1
+group by t1.CustomerName)z order by z.total_spent desc;
+
+--another way
+with invoice_amount as 
+(select invoiceid, sum(extendedprice) as gross_amount from [WideWorldImporters].[dbo].[InvoiceLines]
+group by InvoiceID),
+
+customer_invoice as (
+select a.invoiceid, a.gross_amount, c.CustomerName
+from invoice_amount a
+left join [WideWorldImporters].[dbo].[Invoices] b on a.InvoiceID=b.InvoiceID
+left join [WideWorldImporters].[dbo].Customers c on b.CustomerID=c.CustomerID),
+
+customer_summary as (
+select t1.CustomerName, count(t1.invoiceid) as order_count, sum(t1.gross_amount) as total_spent from customer_invoice t1
+group by t1.CustomerName)
+
+select top 5* from customer_summary order by total_spent desc;
+
+/*
+26. Product Performance by Category
+Write a query to find the top 3 best-selling products (by quantity) in each category. Return category, product_name, and total quantity sold.
+*/
+
+
+select z.stockgroupnames,z.rank as item_rank,z.description as item_name,z.count_items  from (select distinct a.*,b.[StockGroupNames],
+DENSE_RANK() over (partition by b.[StockGroupNames] order by count_items desc) as rank
+from 
+(select StockItemID, Description, SUM(quantity) as count_items
+from [WideWorldImporters].[dbo].[InvoiceLines]
+group by StockItemID, Description) a
+left join [WideWorldImporters].[dbo].[StockItems] b on a.StockItemID=b.StockItemID)z
+where z.rank<=3 order by z.StockGroupNames,z.rank asc;

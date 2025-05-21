@@ -55,5 +55,5 @@ left join ##temp_table1 b on a.SupplierID=b.SupplierID
 )z;
 
 --top suppliers
-select * from  ##temp_table5  order by total_amount desc;
+select top 1 * from  ##temp_table5  order by total_amount desc;
 
